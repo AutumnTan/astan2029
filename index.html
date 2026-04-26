@@ -285,7 +285,6 @@
         renderCart();
     }
 
-    // UPDATED FUNCTION: Uses POST method for reliable data transfer
     function handleCheckout() {
         const name = document.getElementById("cust_name").value;
         const email = document.getElementById("cust_email").value;
@@ -296,7 +295,6 @@
 
         const orderData = JSON.stringify(cart);
 
-        // Standard way to send form data to PHP securely
         const form = document.createElement('form');
         form.method = 'POST'; 
         form.action = 'http://52.74.133.173/cs3/checkout.php';
