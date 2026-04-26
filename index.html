@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Vinyl Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --wood-bg: #9a6d4c;
+            --card-white: #f0f0f0;
+            --accent-green: #8da66b;
+        }
+
+        body { margin: 0; font-family: 'Quicksand', sans-serif; background: var(--wood-bg); overflow-x: hidden; }
+
+        header {
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 60px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .left, .right { display: flex; align-items: center; gap: 25px; }
+        .logo { height: 70px; cursor: pointer; } 
+        .icon { height: 40px; cursor: pointer; transition: 0.3s; }
+        .icon:hover { opacity: 0.7; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 240px; height: 100%;
+            background: black; color: white; padding: 120px 20px 40px;
+            transition: 0.4s ease; z-index: 900; display: flex; flex-direction: column;
+        }
+        .sidebar.active { left: 0; }
+        .sidebar button { 
+            background: none; border: none; color: white; font-size: 18px; 
+            text-align: left; padding: 15px 10px; cursor: pointer; font-family: 'Quicksand';
+        }
+
+        .category-container { position: relative; }
+        .category-btn { 
+            background: white; color: black; border: none; padding: 10px 25px; 
+            border-radius: 8px; font-weight: 700; cursor: pointer; font-family: 'Quicksand'; 
+            text-transform: uppercase;
+        }
+
+        .category-bubble {
+            position: absolute; top: 60px; right: 0; background: white;
+            width: 200px; border-radius: 15px; display: none;
+            flex-direction: column; padding: 10px 0; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 1100;
+        }
+        .category-bubble::after {
+            content: ''; position: absolute; top: -10px; right: 30px;
+            border-left: 10px solid transparent; border-right: 10px solid transparent;
+            border-bottom: 10px solid white;
+        }
+        .category-bubble button {
+            background: none; border: none; padding: 12px 20px; text-align: center;
+            font-family: 'Quicksand'; font-size: 16px; cursor: pointer; transition: 0.2s;
+        }
+        .category-bubble button:hover { background: #f0f0f0; }
+        .category-bubble.show { display: flex; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 2000; display: none;
+            align-items: center; justify-content: center;
+        }
+        .about-popup {
+            background: black; color: white; width: 500px; padding: 40px;
+            border-radius: 25px; position: relative; text-align: center;
+        }
+        .about-popup .close-x { position: absolute; top: 20px; right: 25px; cursor: pointer; font-size: 22px; }
+        .team-list { margin: 30px 0; line-height: 2; font-size: 18px; }
+        .divider { border-top: 1px solid white; margin: 20px 0; width: 100%; }
+
+        .products { max-width: 1400px; margin: 40px auto; padding: 0 20px; display: grid; gap: 25px; }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-5 { grid-template-columns: repeat(5, 1fr); }
+
+        .card { background: var(--card-white); padding: 15px; border-radius: 15px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; }
+        .product-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 10px; margin-bottom: 15px; background: #ddd; }
+        .album-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 5px; }
+        .artist { font-size: 0.9rem; color: #666; margin-bottom: 15px; flex-grow: 1; }
+        .price { font-weight: 700; font-size: 1.1rem; margin-bottom: 15px; }
+        .add { color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 700; background: var(--btn-color, #1a1a1a); }
+
+        .side-panel {
+            position: fixed; top: 0; right: -100%; width: 380px; height: 100%;
+            background: #111; color: white; padding: 30px; transition: 0.4s; z-index: 1200; overflow-y: auto; box-sizing: border-box;
+        }
+        .side-panel.show { right: 0; }
+        
+        .cart-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #222; padding: 10px; border-radius: 8px; margin-bottom: 10px;
+        }
+        .cart-item button {
+            background: #e63946; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 12px;
+        }
+
+        .checkout-form { margin-top: 25px; border-top: 1px solid #333; padding-top: 20px; }
+        .checkout-form input { 
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; 
+            border: 1px solid #444; background: #222; color: white; font-family: 'Quicksand';
+            box-sizing: border-box;
+        }
+        .checkout-btn { 
+            background: var(--accent-green); color: white; border: none; padding: 15px; 
+            width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; 
+            margin-top: 15px; font-size: 1rem; transition: 0.3s;
+        }
+        .checkout-btn:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="left">
+        <img src="https://i.ibb.co/Mx8mLtTW/randos-1.png" class="icon" alt="Menu" onclick="toggleSidebar()">
+        <img src="https://i.ibb.co/0VXRpp3y/randos.png" class="logo" alt="Logo" onclick="goHome()">
+    </div>
+    <div class="right">
+        <div class="category-container">
+            <button class="category-btn" onclick="toggleCategories()">Categories</button>
+            <div class="category-bubble" id="catBubble">
+                <button onclick="loadCategory('zach')">Zach's Albums</button>
+                <button onclick="loadCategory('aj')">AJ's Albums</button>
+                <button onclick="loadCategory('autumn')">Autumn's Albums</button>
+                <button onclick="loadCategory('other')">Other Items</button>
+            </div>
+        </div>
+        <img src="https://i.ibb.co/WNnnjMBv/randos-2.png" class="icon" alt="Cart" onclick="toggleCart()">
+        <img src="https://i.ibb.co/PGkzwtkk/randos-1.png" class="icon" alt="About Us" onclick="toggleAbout()">
+    </div>
+</header>
+
+<div class="sidebar" id="leftSidebar">
+    <button onclick="loadCategory('zach')">Zach's Albums</button>
+    <button onclick="loadCategory('autumn')">Autumn's Albums</button>
+    <button onclick="loadCategory('aj')">AJ's Albums</button>
+    <hr style="border: 0; border-top: 1px solid #333; width: 100%;">
+    <button onclick="loadCategory('other')">Other Products</button>
+</div>
+
+<div class="modal-overlay" id="aboutModal">
+    <div class="about-popup">
+        <div class="close-x" onclick="toggleAbout()">X</div>
+        <h2 style="font-weight: 400; font-size: 24px;">About Us !</h2>
+        <div class="team-list">
+            Zacharie Murakushi - Designer & Coder<br>
+            Angelea Mendoza - Researcher & Coder<br>
+            Autumn Tan - Researcher & Coder
+        </div>
+        <div class="divider"></div>
+        <div style="color: #ccc;">References: Spotify, Google, w3schools, geeksforgeeks</div>
+    </div>
+</div>
+
+<h1 id="pageTitle" style="color:white; text-align:center; margin-top:40px;">OUR COLLECTION</h1>
+<div class="products grid-4" id="products"></div>
+
+<div class="side-panel" id="cartPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>Your Cart</h2>
+        <span onclick="toggleCart()" style="cursor:pointer; font-size: 20px;">✕</span>
+    </div>
+    <div id="cartList"></div>
+    <p style="text-align:right; font-weight: 700; font-size: 1.2rem; margin-top: 20px;">Total: PHP <span id="total">0</span></p>
+    
+    <div class="checkout-form">
+        <input type="text" id="cust_name" placeholder="Full Name" required>
+        <input type="email" id="cust_email" placeholder="Email Address" required>
+        <input type="text" id="cust_addr" placeholder="Delivery Address" required>
+        <button type="button" class="checkout-btn" onclick="handleCheckout()">Checkout</button>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+
+    const database = {
+        more_products: { title: "New Arrivals", items: [
+            {name: "Blonde", artist: "Frank Ocean", price: 1000, img: "https://i.scdn.co/image/ab67616d0000b273c5649add07ed3720be9d5526", color: "#5d5b5c"},
+            {name: "A Matter of Time", artist: "Laufey", price: 3300, img: "https://i.scdn.co/image/ab67616d00001e028f68f6e65c1cfd36bb21561c", color: "#33658c"},
+            {name: "Immunity", artist: "Clairo", price: 2200, img: "https://i.scdn.co/image/ab67616d0000b27333ccb60f9b2785ef691b2fbc", color: "#835634"},
+            {name: "Lifetime (Reimagined)", artist: "Ben&Ben", price: 2000, img: "https://i.scdn.co/image/ab67616d0000b2739649c1885cfb1052f6637464", color: "linear-gradient(to bottom right, #FFEB00 0%, #0047FF 100%)"}, 
+            {name: "New Jeans (EP)", artist: "New Jeans", price: 1500, img: "https://i.scdn.co/image/ab67616d0000b2739d28fd01859073a3ae6ea209", color: "#333973"},
+            {name: "Charm", artist: "Clairo", price: 2200, img: "https://i.scdn.co/image/ab67616d0000b273193c2fafdce8f116b5ca0a78", color: "#1a1a1a"},
+            {name: "IGOR", artist: "Tyler the Creator", price: 4000, img: "https://i.scdn.co/image/ab67616d0000b27330a635de2bb0caa4e26f6abb", color: "#f1aec2"},
+            {name: "Hamilton", artist: "Lin-Manuel Miranda", price: 3500, img: "https://i.scdn.co/image/ab67616d0000b273d72fb5571087bca0a2fed008", color: "#b3762b"},
+            {name: "Lover", artist: "Taylor Swift", price: 4000, img: "https://i.scdn.co/image/ab67616d0000b273e787cffec20aa2a396a61647", color: "#f3b4d4"},
+        ]},
+
+        zach: { title: "Zach's Picks", items: [
+            {name: "Her Favorite Flowers", artist: "Rocco", price: 1200, img: "https://i.scdn.co/image/ab67616d0000b27392051f8cf0590c1b9814fc1e", color: "#F7DD7D"},
+            {name: "Man's Best Friend", artist: "Sabrina Carpenter", price: 2500, img: "https://i.scdn.co/image/ab67616d0000b273b1863bf95557ea7f357c4947", color: "#1a1a1a"},
+            {name: "Everything I Know About Love", artist: "Laufey", price: 3250, img: "https://i.scdn.co/image/ab67616d0000b27377b9aeb46d46a39699ac4b77", color: "#8da66b"},
+            {name: "Ruby", artist: "JENNIE", price: 2800, img: "https://i.scdn.co/image/ab67616d0000b273dcf27dec5e479b2e39c4c993", color: "#e63946"},
+            {name: "This Is How Tomorrow Moves", artist: "beabadoobee", price: 2500, img: "https://i.scdn.co/image/ab67616d0000b2737d9a2e7835a178df7b0153aa", color: "#a3d6e4"}
+        ]},
+        autumn: { title: "Autumn's Picks", items: [
+            {name: "The Queen is Dead", artist: "The Smiths", price: 2555, img: "https://i.scdn.co/image/ab67616d0000b273ada101c2e9e97feb8fae37a9", color: "#344539"},
+            {name: "Abbey Road", artist: "The Beatles", price: 2300, img: "https://i.scdn.co/image/ab67616d0000b273dc30583ba717007b00cceb25", color: "#425251"},
+            {name: "folklore", artist: "Taylor Swift", price: 3600, img: "https://i.scdn.co/image/ab67616d0000b27395f754318336a07e85ec59bc", color: "#838383"},
+            {name: "Beatopia", artist: "Beabadoobee", price: 2000, img: "https://i.scdn.co/image/ab67616d0000b273384d10f967c2b914de7e2713", color: "#ef7dab"},
+            {name: "Short n' Sweet", artist: "Sabrina Carpenter", price: 3400, img: "https://i.scdn.co/image/ab67616d0000b273fd8d7a8d96871e791cb1f626", color: "#2c5197"}
+        ]},
+        aj: { title: "AJ's Picks", items: [
+            {name: "In the Palm of Your Hand", artist: "Buck Owens", price: 900, img: "https://i.scdn.co/image/ab67616d0000b2731dacc2d56bb70c51f28ff745", color: "#41557b"},
+            {name: "BADLANDS", artist: "Halsey", price: 1500, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_Kfp5FQbSQhVb19cfMwq6aYx40xehif0Utw&s", color: "#7bb2b0"},
+            {name: "The Tortured Poets Department", artist: "Taylor Swift", price: 3600, img: "https://i.scdn.co/image/ab67616d0000b2738ecc33f195df6aa257c39eaa", color: "#312c27"},
+            {name: "Coastal Grooves", artist: "Blood Orange", price: 1400, img: "https://i.scdn.co/image/ab67616d0000b273a790082aa893b1f841d7d545", color: "#1a1a1a"},
+            {name: "Mrs Magic", artist: "Strawberry Guy", price: 1200, img: "https://i.scdn.co/image/ab67616d00001e024695126ef47156001851e95c", color: "#714057"}
+        ]},
+        other: { title: "Other Items!", items: [
+            {name: "Stave Record Player", artist: "Crosley", price: 11500, img: "https://i.ibb.co/n5pd2h6/CR6046-A-WAGL-W1-1.webp", color: "#1a1a1a"},
+            {name: "Record Stand and Organizer", artist: "Lazada", price: 2399, img: "https://i.ibb.co/CKYmynSp/shopping.webp", color: "#1a1a1a"},
+            {name: "Vertical Player", artist: "Crosley", price: 9600, img: "https://i.ibb.co/6cVDMgFd/CR6049-A-WA-W1-1.webp", color: "#1a1a1a"}
+        ]}
+    };
+
+    function displayAll() {
+        const container = document.getElementById("products");
+        container.className = "products grid-4";
+        container.innerHTML = "";
+        let allItems = [];
+        Object.keys(database).forEach(key => { 
+            if (key !== 'other') {
+                allItems = allItems.concat(database[key].items); 
+            }
+        });
+        allItems.sort(() => Math.random() - 0.5).forEach(item => { container.innerHTML += createCard(item); });
+    }
+
+    function createCard(item) {
+        return `<div class="card">
+                <img src="${item.img}" class="product-img">
+                <div class="album-name">${item.name}</div>
+                <div class="artist">${item.artist}</div>
+                <div class="price">PHP ${item.price.toLocaleString()}</div>
+                <button class="add" style="--btn-color: ${item.color || '#1a1a1a'};" onclick="addToCart('${item.name.replace(/'/g, "\\'")}', ${item.price})">Add to cart</button>
+            </div>`;
+    }
+
+    function loadCategory(key) {
+        const container = document.getElementById("products");
+        document.getElementById("pageTitle").innerText = database[key].title.toUpperCase();
+        container.className = (key === 'other') ? "products grid-4" : "products grid-5";
+        container.innerHTML = "";
+        database[key].items.forEach(item => { container.innerHTML += createCard(item); });
+        document.getElementById("catBubble").classList.remove("show");
+        document.getElementById("leftSidebar").classList.remove("active");
+    }
+
+    function addToCart(name, price) {
+        cart.push({prod_name: name, prod_price: price});
+        renderCart();
+    }
+
+    function renderCart() {
+        const list = document.getElementById("cartList");
+        let total = 0; 
+        list.innerHTML = "";
+        
+        cart.forEach((item, index) => {
+            total += item.prod_price;
+            list.innerHTML += `
+                <div class="cart-item">
+                    <span>${item.prod_name} (PHP ${item.prod_price.toLocaleString()})</span>
+                    <button onclick="removeFromCart(${index})">Remove</button>
+                </div>`;
+        });
+        document.getElementById("total").innerText = total.toLocaleString();
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    // UPDATED FUNCTION: Uses POST method for reliable data transfer
+    function handleCheckout() {
+        const name = document.getElementById("cust_name").value;
+        const email = document.getElementById("cust_email").value;
+        const addr = document.getElementById("cust_addr").value;
+        
+        if (!name || !email || !addr) return alert("Please fill in all contact details!");
+        if (cart.length === 0) return alert("Your cart is empty!");
+
+        const orderData = JSON.stringify(cart);
+
+        // Standard way to send form data to PHP securely
+        const form = document.createElement('form');
+        form.method = 'POST'; 
+        form.action = 'http://52.74.133.173/cs3/checkout.php';
+
+        const inputs = {
+            cust_name: name,
+            cust_email: email,
+            cust_addr: addr,
+            cust_order: orderData
+        };
+
+        for (const key in inputs) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = inputs[key];
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function toggleSidebar() { document.getElementById("leftSidebar").classList.toggle("active"); }
+    function toggleCategories() { document.getElementById("catBubble").classList.toggle("show"); }
+    function toggleCart() { document.getElementById("cartPanel").classList.toggle("show"); }
+    function toggleAbout() { 
+        const m = document.getElementById("aboutModal");
+        m.style.display = (m.style.display === "flex") ? "none" : "flex"; 
+    }
+    function goHome() { displayAll(); document.getElementById("pageTitle").innerText = "OUR COLLECTION"; }
+
+    window.onload = displayAll;
+    window.onclick = function(e) { if (!e.target.matches('.category-btn')) document.getElementById("catBubble").classList.remove("show"); }
+</script>
+</body>
+</html>
